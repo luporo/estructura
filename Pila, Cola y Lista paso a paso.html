@@ -1,0 +1,350 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Pila, Cola y Lista: estructuras de datos paso a paso</title>
+<style>
+:root{--bg:#f6f5fb;--fg:#1d1b2e;--mu:#5d5a73;--cd:#fff;--bd:#d9d6ea;--ok:#0f9b65;--er:#d92f48;--cb:#16142a;--cf:#e9e7ff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14131f;--fg:#f1effa;--mu:#aaa7c4;--cd:#211f35;--bd:#383551;--cb:#0b0a15;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#14131f;--fg:#f1effa;--mu:#aaa7c4;--cd:#211f35;--bd:#383551;--cb:#0b0a15;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--ac:#6a4cf0}
+body[data-fam=cola]{--ac:#d9500a}body[data-fam=lista]{--ac:#0b8a5f}
+.wrap{max-width:900px;margin:0 auto;padding:16px}
+h1{font-size:clamp(28px,7vw,42px);line-height:1.1;margin:10px 0 6px}
+h2{font-size:22px;margin:0 0 8px}
+p{margin:6px 0;max-width:70ch}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.chips button{font:inherit;font-weight:600;padding:10px 18px;border-radius:999px;border:2px solid var(--bd);background:var(--cd);color:var(--fg);cursor:pointer}
+.chips button.on{background:var(--ac);border-color:var(--ac);color:#fff}
+.card{background:var(--cd);border:1px solid var(--bd);border-radius:18px;padding:18px;margin:14px 0}
+.life{display:grid;gap:14px;grid-template-columns:1fr;align-items:center}
+@media(min-width:640px){.life{grid-template-columns:1fr 1fr}}
+.sc svg{width:100%;height:auto;max-height:230px;color:var(--fg)}
+.row{display:flex;align-items:flex-start;gap:4px;overflow-x:auto;padding:10px 2px 6px}
+.cl{text-align:center}
+.bx{min-width:58px;height:58px;box-sizing:border-box;border-radius:12px;border:2px dashed var(--bd);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700}
+.bx.f{border:2px solid var(--ac);background:color-mix(in srgb,var(--ac) 20%,var(--cd))}
+.bx.add,.nd.add .d{background:var(--ok);color:#fff;animation:pop .6s}
+.bx.del,.nd.del .d{background:var(--er);color:#fff}
+.ix{font-size:14px;color:var(--mu);margin:2px 0}
+.mk{font-size:14px;font-weight:700;color:var(--ac);min-height:22px;white-space:nowrap}
+.nd{display:flex;border-radius:12px;border:2px solid var(--ac);overflow:hidden}
+.nd .d{padding:0 16px;height:54px;display:flex;align-items:center;font-size:22px;font-weight:700;background:color-mix(in srgb,var(--ac) 20%,var(--cd))}
+.nd .s{width:36px;display:flex;align-items:center;justify-content:center;border-left:2px solid var(--ac);color:var(--ac);font-size:20px}
+.ar{margin-top:10px;font-size:26px;color:var(--mu)}
+.pl{margin-top:12px;padding:6px 14px;border-radius:999px;background:var(--ac);color:#fff;font-weight:700;font-size:16px}
+.nn{margin-top:13px;padding:8px 12px;border:2px dashed var(--mu);border-radius:10px;color:var(--mu);font-family:ui-monospace,Menlo,monospace}
+@keyframes pop{0%{transform:scale(.5)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){.bx.add,.nd.add .d{animation:none}}
+label{font-weight:600}
+input{font:inherit;width:84px;padding:10px;border-radius:12px;border:2px solid var(--bd);background:var(--bg);color:var(--fg)}
+.ctl{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:6px 0}
+.bt{font:inherit;font-weight:700;padding:11px 18px;border:2px solid var(--ac);border-radius:12px;color:#fff;cursor:pointer;background:var(--ac)}
+.bt.o{background:transparent;color:var(--fg);border-color:var(--bd)}.bt.d{background:var(--er);border-color:var(--er)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
+#msg{font-weight:700;margin-top:10px}.err{color:var(--er)}
+ol{padding-left:24px;margin:8px 0}
+pre{background:var(--cb);color:var(--cf);border-radius:14px;padding:14px;overflow-x:auto;font:15px/1.55 ui-monospace,Menlo,Consolas,monospace;margin:10px 0}
+.ba{display:grid;gap:4px}.ba b{font-size:15px}
+</style></head><body>
+<div class="wrap">
+<h1>Pila, Cola y Lista paso a paso</h1>
+<p>Elegí una estructura, mirá cómo se parece a algo de la vida real, probala con tus propios números y revisá el código de cada operación con su dibujo.</p>
+<div id="nav"></div><div id="main"></div>
+<p class="ix">Los arreglos tienen tamaño 6. Los dibujos de las estructuras encadenadas se limitan a 8 nodos para que entren en pantalla.</p>
+</div>
+<script>
+const N=6,MAX=8;
+const P=k=>{const[f,i,m]=k.split('-');return{fam:f,sec:i=='sec',con:m=='con'}};
+const SMP=k=>P(k).con?[7,12,30]:[12,7,30];
+const ST={};
+const ini=k=>ST[k]={a:SMP(k),f:0};
+const rnd=()=>10+Math.floor(Math.random()*90);
+const hc=v=>`hsl(${(v*47)%360} 70% 62%)`;
+const FAMT={
+pila:{n:'Pila',r:'Regla: la última en entrar es la primera en salir (LIFO). Solo se trabaja en un extremo, el tope.',I:'Apilar',E:'Desapilar'},
+cola:{n:'Cola',r:'Regla: el primero en entrar es el primero en salir (FIFO). Se entra por el final y se sale por el frente.',I:'Encolar',E:'Desencolar'},
+lista:{n:'Lista',r:'Una lista guarda elementos en fila y permite insertar o suprimir en cualquier parte, no solo en los extremos.',I:'Insertar',E:'Suprimir'}};
+const LIFE={
+pila:'Platos apilados: solo podés poner o sacar el de arriba. Para llegar al de abajo, primero sacás todos los de encima. El tope es el plato de arriba.',
+cola:'La fila de la caja del supermercado: atienden al que llegó primero y el que llega se pone al final. Nadie se cuela por el medio.',
+'lista-sec':'Estante de libros: están pegados uno al lado del otro. Para meter uno en el medio hay que correr todos los siguientes, y al sacar uno se corren para tapar el hueco.',
+'lista-enc':'Tren de vagones: cada vagón está enganchado al siguiente. Para meter uno en el medio solo cambiás dos enganches, sin mover ningún vagón.'};
+const SECI='Se guarda en un arreglo de tamaño fijo: los datos están pegados y unas variables (tope, frente, n…) dicen dónde está cada cosa.';
+const ENCI='Cada dato vive en un nodo con dos casilleros: el dato y la flecha al nodo siguiente. Solo hay que recordar el primero. No hay tamaño fijo.';
+const C={
+'pila-sec':{c:`class PilaSecuencial:
+    def __init__(self, n=6):
+        self.datos = [None] * n
+        self.tope = -1`,i:`    def apilar(self, x):
+        if self.tope == len(self.datos) - 1:
+            raise Exception("pila llena")
+        self.tope += 1
+        self.datos[self.tope] = x`,d:`    def desapilar(self):
+        if self.tope == -1:
+            raise Exception("pila vacia")
+        x = self.datos[self.tope]
+        self.tope -= 1
+        return x`},
+'pila-enc':{c:`class Nodo:
+    def __init__(self, dato, sig=None):
+        self.dato = dato
+        self.sig = sig
+
+class PilaEncadenada:
+    def __init__(self):
+        self.cima = None`,i:`    def apilar(self, x):
+        nuevo = Nodo(x)
+        nuevo.sig = self.cima
+        self.cima = nuevo`,d:`    def desapilar(self):
+        if self.cima is None:
+            raise Exception("pila vacia")
+        x = self.cima.dato
+        self.cima = self.cima.sig
+        return x`},
+'cola-sec':{c:`class ColaSecuencial:
+    def __init__(self, n=6):
+        self.datos = [None] * n
+        self.frente = 0
+        self.cant = 0`,i:`    def encolar(self, x):
+        n = len(self.datos)
+        if self.cant == n:
+            raise Exception("cola llena")
+        final = (self.frente + self.cant) % n
+        self.datos[final] = x
+        self.cant += 1`,d:`    def desencolar(self):
+        if self.cant == 0:
+            raise Exception("cola vacia")
+        x = self.datos[self.frente]
+        self.frente = (self.frente + 1) % len(self.datos)
+        self.cant -= 1
+        return x`},
+'cola-enc':{c:`class Nodo:
+    def __init__(self, dato, sig=None):
+        self.dato = dato
+        self.sig = sig
+
+class ColaEncadenada:
+    def __init__(self):
+        self.frente = None
+        self.final = None`,i:`    def encolar(self, x):
+        nuevo = Nodo(x)
+        if self.final is None:
+            self.frente = nuevo
+        else:
+            self.final.sig = nuevo
+        self.final = nuevo`,d:`    def desencolar(self):
+        if self.frente is None:
+            raise Exception("cola vacia")
+        x = self.frente.dato
+        self.frente = self.frente.sig
+        if self.frente is None:
+            self.final = None
+        return x`},
+'lista-sec-pos':{c:`class ListaSecuencial:
+    def __init__(self, n=6):
+        self.datos = [None] * n
+        self.n = 0`,i:`    def insertar(self, p, x):
+        if self.n == len(self.datos):
+            raise Exception("lista llena")
+        for k in range(self.n, p, -1):
+            self.datos[k] = self.datos[k - 1]
+        self.datos[p] = x
+        self.n += 1`,d:`    def suprimir(self, p):
+        x = self.datos[p]
+        for k in range(p, self.n - 1):
+            self.datos[k] = self.datos[k + 1]
+        self.n -= 1
+        return x`},
+'lista-sec-con':{c:`class ListaSecuencialOrdenada:
+    def __init__(self, n=6):
+        self.datos = [None] * n
+        self.n = 0`,i:`    def insertar(self, x):
+        if self.n == len(self.datos):
+            raise Exception("lista llena")
+        p = 0
+        while p < self.n and self.datos[p] < x:
+            p += 1
+        for k in range(self.n, p, -1):
+            self.datos[k] = self.datos[k - 1]
+        self.datos[p] = x
+        self.n += 1`,d:`    def suprimir(self, x):
+        p = 0
+        while p < self.n and self.datos[p] < x:
+            p += 1
+        if p == self.n or self.datos[p] != x:
+            raise Exception("no esta")
+        for k in range(p, self.n - 1):
+            self.datos[k] = self.datos[k + 1]
+        self.n -= 1`},
+'lista-enc-pos':{c:`class Nodo:
+    def __init__(self, dato, sig=None):
+        self.dato = dato
+        self.sig = sig
+
+class ListaEncadenada:
+    def __init__(self):
+        self.primero = None`,i:`    def insertar(self, p, x):
+        nuevo = Nodo(x)
+        if p == 0:
+            nuevo.sig = self.primero
+            self.primero = nuevo
+        else:
+            ant = self.primero
+            for _ in range(p - 1):
+                ant = ant.sig
+            nuevo.sig = ant.sig
+            ant.sig = nuevo`,d:`    def suprimir(self, p):
+        if p == 0:
+            x = self.primero.dato
+            self.primero = self.primero.sig
+        else:
+            ant = self.primero
+            for _ in range(p - 1):
+                ant = ant.sig
+            x = ant.sig.dato
+            ant.sig = ant.sig.sig
+        return x`},
+'lista-enc-con':{c:`class Nodo:
+    def __init__(self, dato, sig=None):
+        self.dato = dato
+        self.sig = sig
+
+class ListaEncadenadaOrdenada:
+    def __init__(self):
+        self.primero = None`,i:`    def insertar(self, x):
+        nuevo = Nodo(x)
+        if self.primero is None or x < self.primero.dato:
+            nuevo.sig = self.primero
+            self.primero = nuevo
+        else:
+            ant = self.primero
+            while ant.sig and ant.sig.dato < x:
+                ant = ant.sig
+            nuevo.sig = ant.sig
+            ant.sig = nuevo`,d:`    def suprimir(self, x):
+        if self.primero and self.primero.dato == x:
+            self.primero = self.primero.sig
+            return
+        ant = self.primero
+        while ant and ant.sig and ant.sig.dato < x:
+            ant = ant.sig
+        if ant is None or ant.sig is None or ant.sig.dato != x:
+            raise Exception("no esta")
+        ant.sig = ant.sig.sig`}};
+
+function run(k,s,t,v,p){
+ const d=P(k),a=s.a.slice(),l=a.length,f=s.f,fm=d.fam,sec=d.sec,con=d.con;let q,st=[],val;
+ if(t=='i'){
+  if(l>=(sec?N:MAX))return{e:sec?'Está llena (desbordamiento): no hay más lugar en el arreglo.':'Llegaste al máximo de nodos que entra en el dibujo ('+MAX+').'};
+  if(fm=='lista'&&!con&&!(Number.isInteger(p)&&p>=0&&p<=l))return{e:'Posición inválida: elegí un entero de 0 a '+l+'.'};
+  q=fm!='lista'?l:con?(()=>{let i=0;while(i<l&&a[i]<v)i++;return i})():p;
+  const bus=con?['Busco su lugar en la lista ordenada: le toca la posición '+q+'.']:[],n='nuevo = Nodo('+v+')';
+  if(sec){
+   if(fm=='pila')st=['tope = tope + 1  (queda tope = '+l+')','datos['+l+'] = '+v];
+   else if(fm=='cola'){const e=(f+l)%N;st=['final = (frente + cant) % N  (queda final = '+e+')','datos['+e+'] = '+v,'cant = cant + 1']}
+   else st=bus.concat([q<l?'Corro '+(l-q)+' elemento(s) una posición a la derecha, empezando por el último':'Va al final: no hay que correr nada','datos['+q+'] = '+v,'n = n + 1']);
+  }else{
+   if(fm=='pila')st=[n,'nuevo.sig = cima','cima = nuevo'];
+   else if(fm=='cola')st=l?[n,'final.sig = nuevo','final = nuevo']:[n,'La cola estaba vacía: frente = nuevo','final = nuevo'];
+   else st=bus.concat(q==0?[n,'nuevo.sig = primero','primero = nuevo']:[n,'ant = nodo de la posición '+(q-1)+' (recorro '+(q-1)+' enlace(s))','nuevo.sig = ant.sig','ant.sig = nuevo']);
+  }
+  a.splice(q,0,v);return{s:{a,f},steps:st,add:q};
+ }
+ if(!l)return{e:'Está vacía (subdesbordamiento): no hay nada para sacar.'};
+ if(fm=='lista'&&con){q=a.indexOf(v);if(q<0)return{e:'El '+v+' no está en la lista.'}}
+ else if(fm=='lista'){if(!(Number.isInteger(p)&&p>=0&&p<l))return{e:'Posición inválida: elegí un entero de 0 a '+(l-1)+'.'};q=p}
+ else q=fm=='pila'?l-1:0;
+ val=a[q];
+ const bus=con?['Busco el '+val+': está en la posición '+q+'.']:[],sx='  (sale el '+val+')';
+ if(sec){
+  if(fm=='pila')st=['x = datos['+q+']'+sx,'tope = tope - 1'];
+  else if(fm=='cola')st=['x = datos['+f+']'+sx,'frente = (frente + 1) % N  (queda frente = '+(f+1)%N+')','cant = cant - 1'];
+  else st=bus.concat(['x = datos['+q+']'+sx,q<l-1?'Corro '+(l-1-q)+' elemento(s) una posición a la izquierda':'Era el último: no hay que correr nada','n = n - 1']);
+ }else{
+  if(fm=='pila')st=['x = cima.dato'+sx,'cima = cima.sig'];
+  else if(fm=='cola')st=['x = frente.dato'+sx,'frente = frente.sig'].concat(l==1?['Quedó vacía: final = None']:[]);
+  else st=bus.concat(q==0?['x = primero.dato'+sx,'primero = primero.sig']:['ant = nodo de la posición '+(q-1),'x = ant.sig.dato'+sx,'ant.sig = ant.sig.sig']);
+ }
+ a.splice(q,1);
+ return{s:{a,f:fm=='cola'&&sec?(f+1)%N:f},steps:st,del:q,val};
+}
+
+function R(k,s,o){o=o||{};const d=P(k),a=s.a,l=a.length;let h='';
+ if(d.sec){
+  const m=Array(N).fill(''),vals=Array(N).fill(null),L=Array(N).fill(-1);
+  for(let j=0;j<l;j++){const i=d.fam=='cola'?(s.f+j)%N:j;vals[i]=a[j];L[i]=j}
+  if(d.fam=='pila'&&l)m[l-1]='tope';
+  if(d.fam=='cola'&&l){m[s.f]='frente';const e=(s.f+l-1)%N;m[e]=m[e]?'frente / final':'final'}
+  if(d.fam=='lista'&&l<N)m[l]='n';
+  h='<div class="row">';
+  for(let i=0;i<N;i++){const c=L[i]<0?'':(L[i]===o.add?' f add':L[i]===o.del?' f del':' f');
+   h+=`<div class="cl"><div class="bx${c}">${vals[i]==null?'':vals[i]}</div><div class="ix">${i}</div><div class="mk">${m[i]}</div></div>`}
+  h+='</div><div class="ix">'+({pila:'tope = '+(l-1),cola:'frente = '+s.f+',  cant = '+l,lista:'n = '+l})[d.fam]+'</div>';
+ }else{
+  const pn={pila:'cima',cola:'frente',lista:'primero'}[d.fam],r=d.fam=='pila'?a.slice().reverse():a;
+  const hi=j=>d.fam=='pila'?l-1-j:j,ad=o.add==null?-1:hi(o.add),dl=o.del==null?-1:hi(o.del);
+  h='<div class="row"><span class="pl">'+pn+'</span><span class="ar">→</span>';
+  r.forEach((v,i)=>{h+=`<div class="cl"><div class="nd${i===ad?' add':i===dl?' del':''}"><span class="d">${v}</span><span class="s">●</span></div><div class="mk">${d.fam=='cola'&&i==l-1?'final':''}</div></div><span class="ar">→</span>`});
+  h+='<span class="nn">None</span></div>';
+  if(!l&&d.fam=='cola')h+='<div class="ix">frente = None,  final = None</div>';
+ }
+ return h;
+}
+
+function SC(k,s){const d=P(k),a=s.a,l=a.length;let g='',w=240,H=150;
+ if(d.fam=='pila'){
+  a.forEach((v,i)=>{const y=128-i*17;g+=`<rect x="50" y="${y}" width="140" height="14" rx="7" fill="${hc(v)}"/><text x="120" y="${y+11}" text-anchor="middle" font-size="12" font-weight="700" fill="#222">${v}</text>`});
+  g+='<rect x="30" y="144" width="180" height="5" rx="2" fill="#8a8799"/>';
+ }else if(d.fam=='cola'){
+  w=340;H=118;g='<rect x="4" y="25" width="26" height="70" rx="5" fill="#8a8799"/><text x="17" y="64" text-anchor="middle" font-size="11" fill="#fff">caja</text>';
+  a.forEach((v,i)=>{const x=56+i*34;g+=`<circle cx="${x}" cy="52" r="10" fill="${hc(v)}"/><rect x="${x-10}" y="64" width="20" height="30" rx="9" fill="${hc(v)}"/><text x="${x}" y="110" text-anchor="middle" font-size="12" font-weight="700" fill="currentColor">${v}</text>`});
+  if(l)g+='<text x="56" y="18" text-anchor="middle" font-size="12" fill="currentColor">sale</text>';
+  if(l>1)g+=`<text x="${56+(l-1)*34}" y="18" text-anchor="middle" font-size="12" fill="currentColor">entra</text>`;
+ }else if(d.sec){
+  H=145;g='<rect x="10" y="112" width="214" height="6" rx="3" fill="#8a8799"/>';
+  for(let i=0;i<N;i++){const x=20+i*32;
+   if(i<l){const h=48+(a[i]%7)*8;g+=`<rect x="${x}" y="${112-h}" width="26" height="${h}" rx="3" fill="${hc(a[i])}"/><text x="${x+13}" y="132" text-anchor="middle" font-size="12" font-weight="700" fill="currentColor">${a[i]}</text>`}
+   else g+=`<rect x="${x}" y="72" width="26" height="40" rx="3" fill="none" stroke="#8a8799" stroke-dasharray="4 3"/>`}
+ }else{
+  w=Math.max(220,70+l*50);H=95;
+  g='<rect x="4" y="38" width="46" height="34" rx="6" fill="#4b4a5c"/><rect x="34" y="26" width="16" height="14" fill="#4b4a5c"/><text x="27" y="59" text-anchor="middle" font-size="10" fill="#fff">primero</text><circle cx="16" cy="76" r="7" fill="#222"/><circle cx="40" cy="76" r="7" fill="#222"/>';
+  a.forEach((v,i)=>{const x=64+i*50;g+=`<line x1="${x-14}" y1="62" x2="${x}" y2="62" stroke="#8a8799" stroke-width="3"/><rect x="${x}" y="40" width="40" height="32" rx="5" fill="${hc(v)}"/><text x="${x+20}" y="61" text-anchor="middle" font-size="14" font-weight="700" fill="#222">${v}</text><circle cx="${x+10}" cy="76" r="6" fill="#222"/><circle cx="${x+30}" cy="76" r="6" fill="#222"/>`});
+ }
+ return `<svg viewBox="0 0 ${w} ${H}" role="img" aria-label="Dibujo de ${FAMT[d.fam].n.toLowerCase()} de la vida real">${g}</svg>`;
+}
+
+function CD(k,t){const d=P(k),sm={a:SMP(k),f:0};
+ if(t=='c')return '<div class="ix"><b>Así queda al crearla, vacía:</b></div>'+R(k,{a:[],f:0});
+ const sp=d.fam=='lista'?(d.con?{v:t=='i'?20:12}:{v:99,p:1}):{v:99},r=run(k,sm,t,sp.v,sp.p);
+ const ds=t=='i'?'Ejemplo: insertar el '+sp.v+(sp.p!=null?' en la posición '+sp.p:''):'Ejemplo: '+(d.fam=='lista'?(d.con?'suprimir el '+sp.v:'suprimir la posición '+sp.p):'sacar un elemento');
+ return `<div class="ix"><b>${ds}</b></div><div class="ba"><b>Antes</b>${R(k,sm,t=='d'?{del:r.del}:{})}<b>Después</b>${R(k,r.s,{add:r.add})}</div><ol>${r.steps.map(x=>'<li>'+x+'</li>').join('')}</ol><div class="ix">Verde: se agrega. Rojo: se saca.</div>`;
+}
+
+let fam='pila',imp='sec',mode='pos',tab='c';
+const key=()=>fam+'-'+imp+(fam=='lista'?'-'+mode:'');
+const el=i=>document.getElementById(i);
+function chip(v,o,cur){return '<div class="chips">'+o.map(([x,t])=>`<button class="${x==cur?'on':''}" onclick="go('${v}','${x}')">${t}</button>`).join('')+'</div>'}
+function go(v,x){if(v=='fam')fam=x;else if(v=='imp')imp=x;else mode=x;tab='c';view()}
+function tabs(){const F=FAMT[fam];el('tabs').innerHTML=[['c','Constructor'],['i',F.I.replace('Apilar','Insertar (apilar)').replace('Encolar','Insertar (encolar)').replace(/^Insertar$/,'Insertar')],['d',F.E.replace('Desapilar','Suprimir (desapilar)').replace('Desencolar','Suprimir (desencolar)')]].map(([x,t])=>`<button class="${x==tab?'on':''}" onclick="st2('${x}')">${t}</button>`).join('')}
+function st2(x){tab=x;tabs();code()}
+function code(){const k=key();el('code').textContent=C[k][tab];el('cd').innerHTML=CD(k,tab)}
+function upd(o){const k=key(),s=ST[k]||ini(k);el('dr').innerHTML=R(k,s,o);el('sc').innerHTML=SC(k,s)}
+function msg(t,e,steps){el('msg').textContent=t;el('msg').className=e?'err':'';if(steps!==undefined)el('steps').innerHTML=steps.map(x=>'<li>'+x+'</li>').join('')}
+function act(t){const k=key(),d=P(k),s=ST[k]||ini(k),vi=el('v'),pe=el('p');
+ const v=vi.value===''?NaN:+vi.value,p=pe?(pe.value===''?NaN:+pe.value):0;
+ if((t=='i'||d.con)&&isNaN(v))return msg('Escribí un número en Valor.',1);
+ const r=run(k,s,t,v,p);if(r.e)return msg(r.e,1);
+ ST[k]=r.s;msg(t=='i'?'Insertaste el '+v+'. Pasos:':'Salió el '+r.val+'. Pasos:',0,r.steps);vi.value=rnd();upd({add:r.add});
+}
+function rs(x){const k=key();ST[k]=x?{a:SMP(k),f:0}:{a:[],f:0};msg(x?'Cargaste un ejemplo.':'Se creó vacía (constructor).',0,[]);upd()}
+function view(){const k=key(),d=P(k),F=FAMT[fam];ini2(k);document.body.dataset.fam=fam;
+ el('nav').innerHTML=chip('fam',[['pila','Pila'],['cola','Cola'],['lista','Lista']],fam)+chip('imp',[['sec','Secuencial'],['enc','Encadenada']],imp)+(fam=='lista'?chip('mode',[['pos','Por posición'],['con','Por contenido']],mode):'');
+ const nm=F.n+(d.sec?' secuencial':' encadenada')+(fam=='lista'?(d.con?' por contenido':' por posición'):'');
+ const note=(fam=='cola'&&d.sec?' Es un arreglo circular: cuando final llega al último casillero vuelve al 0 (por eso el % N), y así se reutilizan los lugares que dejó libres el frente.':'')+(d.con?' Por contenido: la lista siempre está ordenada de menor a mayor. Insertás un valor y se acomoda solo; suprimís diciendo qué valor sacar, no qué lugar.':fam=='lista'?' Por posición: vos elegís en qué lugar (0, 1, 2…) insertar o suprimir.':'');
+ el('main').innerHTML=`<section class="card"><h2>${nm}</h2><p>${F.r}</p><p>${d.sec?SECI:ENCI}${note}</p></section>
+<section class="card"><h2>En la vida real</h2><div class="life"><p>${LIFE[fam=='lista'?'lista-'+imp:fam]}</p><div class="sc" id="sc"></div></div></section>
+<section class="card"><h2>Probalo vos</h2><div id="dr"></div><div class="ctl">${fam=='lista'&&!d.con?'<label>Posición <input id="p" type="number" value="1" min="0"></label>':''}<label>Valor <input id="v" type="number" value="${rnd()}"></label><button class="bt" onclick="act('i')">${F.I}</button><button class="bt d" onclick="act('d')">${F.E}</button></div><div class="ctl"><button class="bt o" onclick="rs(0)">Crear vacía</button><button class="bt o" onclick="rs(1)">Cargar ejemplo</button></div><div id="msg" aria-live="polite"></div><ol id="steps"></ol></section>
+<section class="card"><h2>Código y dibujo de cada operación</h2><p>Los métodos van dentro de la clase. Elegí una pestaña para ver su código y qué pasa en el dibujo.</p><div class="chips" id="tabs"></div><pre id="code"></pre><div id="cd"></div></section>`;
+ upd();tabs();code();
+}
+const ini2=k=>ST[k]||ini(k);
+view();
+</script></body></html>
